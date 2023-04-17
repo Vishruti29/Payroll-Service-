@@ -11,7 +11,7 @@ public class PayrollServiceDatabaseTest {
             assertNotNull(conn);
             assertFalse(conn.isClosed());
             DatabaseMetaData metaData = conn.getMetaData();
-            assertEquals("MySQL Connector/J", metaData.getDriverName());
+            assertEquals("MySQL Connector/J", metaData.getDriverName()); // check connection
         } catch (SQLException e) {
             fail("Failed to connect to database: " + e.getMessage());
         }
