@@ -13,9 +13,11 @@ public class EmployeePayrollServiceTest {
     public void testUpdateEmployeeSalary() {
         EmployeePayrollService service = new EmployeePayrollService();
         String name = "DEF";
+        double oldSalary = service.getEmployeePayrollByName(name).getSalary();
         double newSalary = 3000000.00;
         service.updateEmployeeSalary(name, newSalary);
-        EmployeePayroll employeePayroll = service.getEmployeePayrollByName(name);
-        assertEquals(newSalary, employeePayroll.getSalary(), 0.0);
+        assertEquals(newSalary, service.getEmployeePayrollByName(name).getSalary(), 0.0);
+        service.updateEmployeeSalary(name, oldSalary);
+        assertEquals(oldSalary, service.getEmployeePayrollByName(name).getSalary(), 3000000.00);
     }
 }
