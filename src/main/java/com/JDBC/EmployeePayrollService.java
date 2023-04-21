@@ -1,13 +1,9 @@
 package com.JDBC;
 import java.sql.Connection;
-import java.sql.Date;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
 public class EmployeePayrollService {
     private static final String DB_URL = "jdbc:mysql://localhost:3306/payroll_service";
@@ -18,43 +14,83 @@ public class EmployeePayrollService {
         return DriverManager.getConnection(DB_URL, USER, PASSWORD);
     }
 
-    public List<EmployeePayroll> getEmployeePayrollList() {
-        List<EmployeePayroll> employeePayrollList = new ArrayList<>();
+    public double getSumOfSalaryByGender(String gender) {
+        double sum = 0;
         try (Connection connection = getConnection()) {
-            String sql = "SELECT * FROM employee_payroll";
+            String sql = "SELECT SUM(salary) FROM employee_payroll WHERE gender = ?";
             PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, gender);
             ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                double salary = resultSet.getDouble("salary");
-                LocalDate startDate = resultSet.getDate("start_date").toLocalDate();
-                employeePayrollList.add(new EmployeePayroll(id, name, salary, startDate));
+            if (resultSet.next()) {
+                sum = resultSet.getDouble(1);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving employee payroll list", e);
+            throw new RuntimeException("Error getting sum of salary by gender", e);
         }
-        return employeePayrollList;
+        return sum;
     }
 
-    public List<EmployeePayroll> getEmployeePayrollListByDateRange(LocalDate startDate, LocalDate endDate) {
-        List<EmployeePayroll> employeePayrollList = new ArrayList<>();
+    public double getAverageSalaryByGender(String gender) {
+        double average = 0;
         try (Connection connection = getConnection()) {
-            String sql = "SELECT * FROM employee_payroll WHERE start_date BETWEEN ? AND ?";
+            String sql = "SELECT AVG(salary) FROM employee_payroll WHERE gender = ?";
             PreparedStatement statement = connection.prepareStatement(sql);
-            statement.setDate(1, Date.valueOf(startDate));
-            statement.setDate(2, Date.valueOf(endDate));
+            statement.setString(1, gender);
             ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                int id = resultSet.getInt("id");
-                String name = resultSet.getString("name");
-                double salary = resultSet.getDouble("salary");
-                LocalDate joinDate = resultSet.getDate("start_date").toLocalDate();
-                employeePayrollList.add(new EmployeePayroll(id, name, salary, joinDate));
+            if (resultSet.next()) {
+                average = resultSet.getDouble(1);
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error retrieving employee payroll list by date range", e);
+            throw new RuntimeException("Error getting average salary by gender", e);
         }
-        return employeePayrollList;
+        return average;
+    }
+
+    public double getMinSalaryByGender(String gender) {
+        double minSalary = 0;
+        try (Connection connection = getConnection()) {
+            String sql = "SELECT MIN(salary) FROM employee_payroll WHERE gender = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, gender);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                minSalary = resultSet.getDouble(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting minimum salary by gender", e);
+        }
+        return minSalary;
+    }
+
+    public double getMaxSalaryByGender(String gender) {
+        double maxSalary = 0;
+        try (Connection connection = getConnection()) {
+            String sql = "SELECT MAX(salary) FROM employee_payroll WHERE gender = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, gender);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                maxSalary = resultSet.getDouble(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting maximum salary by gender", e);
+        }
+        return maxSalary;
+    }
+
+    public int getCountByGender(String gender) {
+        int count = 0;
+        try (Connection connection = getConnection()) {
+            String sql = "SELECT COUNT(*) FROM employee_payroll WHERE gender = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, gender);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                count = resultSet.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error getting count by gender", e);
+        }
+        return count;
     }
 }
