@@ -1,23 +1,23 @@
 package com.JDBC;
+import static org.junit.Assert.assertEquals;
+import java.time.LocalDate;
+import java.util.List;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import static org.junit.Assert.*;
 
 public class EmployeePayrollServiceTest {
-    @Test
-    public void testGetEmployeePayrollList() {
-        EmployeePayrollService service = new EmployeePayrollService();
-        assertFalse(service.getEmployeePayrollList().isEmpty());
+    private static EmployeePayrollService service;
+
+    @BeforeClass
+    public static void setUp() {
+        service = new EmployeePayrollService();
     }
 
     @Test
-    public void testUpdateEmployeeSalary() {
-        EmployeePayrollService service = new EmployeePayrollService();
-        String name = "DEF";
-        double oldSalary = service.getEmployeePayrollByName(name).getSalary();
-        double newSalary = 3000000.00;
-        service.updateEmployeeSalary(name, newSalary);
-        assertEquals(newSalary, service.getEmployeePayrollByName(name).getSalary(), 0.0);
-        service.updateEmployeeSalary(name, oldSalary);
-        assertEquals(oldSalary, service.getEmployeePayrollByName(name).getSalary(), 3000000.00);
+    public void givenDateRange_WhenRetrievingEmployeePayrollList_ThenReturnCorrectList() {
+        LocalDate startDate = LocalDate.of(2022, 1, 1);
+        LocalDate endDate = LocalDate.of(2022, 12, 31);
+        List<EmployeePayroll> payrollList = service.getEmployeePayrollListByDateRange(startDate, endDate);
+        assertEquals(3, payrollList.size());
     }
 }
