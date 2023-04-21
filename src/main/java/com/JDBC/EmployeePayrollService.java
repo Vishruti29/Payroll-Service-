@@ -1,84 +1,72 @@
 package com.JDBC;
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
 public class EmployeePayrollService {
-    private final String url = "jdbc:mysql://localhost:3306/payroll_service";
-    private final String user = "root";
-    private final String password = "Garv@2404";
+    private final String DB_URL = "jdbc:mysql://localhost:3306/payroll_service";
+    private final String USER = "root";
+    private final String PASSWORD = "Garv@2404";
 
-    public List<EmployeePayroll> getEmployeePayrollList() {
-        try {
-            List<EmployeePayroll> employeePayrollList = new ArrayList<>();
-            String sql = "SELECT * FROM employee_payroll";
-            try (Connection conn = DriverManager.getConnection(url, user, password);
-                 Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(sql)) {
-                while (rs.next()) {
-                    int id = rs.getInt("id");
-                    String name = rs.getString("name");
-                    double salary = rs.getDouble("salary");
-                    LocalDate startDate = rs.getDate("start_date").toLocalDate();
-                    EmployeePayroll employeePayroll = new EmployeePayroll(id, name, salary, startDate);
-                    employeePayrollList.add(employeePayroll);
-                }
-            }
-            return employeePayrollList;
-        } catch (SQLException e) {
-            throw new DatabaseException("Error retrieving employee payroll data: " + e.getMessage());
-        }
+    private Connection getConnection() throws SQLException {
+        return DriverManager.getConnection(DB_URL, USER, PASSWORD);
     }
 
-    public void updateEmployeeSalary(String name, double salary) {
-        try {
-            String sql = "UPDATE employee_payroll SET salary=? WHERE name=?";
-            try (Connection conn = DriverManager.getConnection(url, user, password);
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setDouble(1, salary);
-                pstmt.setString(2, name);
-                int rowsUpdated = pstmt.executeUpdate();
-                if (rowsUpdated == 0) {
-                    throw new EmployeeNotFoundException("Employee " + name + " not found");
-                }
+    public List<EmployeePayroll> getEmployeePayrollList() {
+        List<EmployeePayroll> employeePayrollList = new ArrayList<>();
+        try (Connection connection = getConnection()) {
+            String sql = "SELECT * FROM employee_payroll";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            ResultSet resultSet = statement.executeQuery();
+            while (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                String name = resultSet.getString("name");
+                double salary = resultSet.getDouble("salary");
+                String startDate = resultSet.getString("start_date");
+                employeePayrollList.add(new EmployeePayroll(id, name, salary, LocalDate.parse(startDate)));
             }
         } catch (SQLException e) {
-            throw new DatabaseException("Error updating employee payroll data: " + e.getMessage());
+            throw new RuntimeException("Error retrieving employee payroll list", e);
         }
+        return employeePayrollList;
     }
 
     public EmployeePayroll getEmployeePayrollByName(String name) {
-        try {
-            String sql = "SELECT * FROM employee_payroll WHERE name=?";
-            try (Connection conn = DriverManager.getConnection(url, user, password);
-                 PreparedStatement pstmt = conn.prepareStatement(sql)) {
-                pstmt.setString(1, name);
-                try (ResultSet rs = pstmt.executeQuery()) {
-                    if (rs.next()) {
-                        int id = rs.getInt("id");
-                        double salary = rs.getDouble("salary");
-                        LocalDate startDate = rs.getDate("start_date").toLocalDate();
-                        return new EmployeePayroll(id, name, salary, startDate);
-                    } else {
-                        throw new EmployeeNotFoundException("Employee " + name + " not found");
-                    }
-                }
+        EmployeePayroll employeePayroll = null;
+        try (Connection connection = getConnection()) {
+            String sql = "SELECT * FROM employee_payroll WHERE name = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setString(1, name);
+            ResultSet resultSet = statement.executeQuery();
+            if (resultSet.next()) {
+                int id = resultSet.getInt("id");
+                double salary = resultSet.getDouble("salary");
+                String startDate = resultSet.getString("start_date");
+                employeePayroll = new EmployeePayroll(id, name, salary, LocalDate.parse(startDate));
             }
         } catch (SQLException e) {
-            throw new DatabaseException("Error retrieving employee payroll data: " + e.getMessage());
+            throw new RuntimeException("Error retrieving employee payroll for name: " + name, e);
         }
+        return employeePayroll;
     }
 
-    class DatabaseException extends RuntimeException {
-        public DatabaseException(String message) {
-            super(message);
-        }
-    }
-
-    class EmployeeNotFoundException extends RuntimeException {
-        public EmployeeNotFoundException(String message) {
-            super(message);
+    public void updateEmployeeSalary(String name, double newSalary) {
+        try (Connection connection = getConnection()) {
+            String sql = "UPDATE employee_payroll SET salary = ? WHERE name = ?";
+            PreparedStatement statement = connection.prepareStatement(sql);
+            statement.setDouble(1, newSalary);
+            statement.setString(2, name);
+            int rowsUpdated = statement.executeUpdate();
+            if (rowsUpdated == 0) {
+                throw new RuntimeException("Failed to update employee payroll with name: " + name);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error updating employee payroll with name: " + name, e);
         }
     }
 }
